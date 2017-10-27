@@ -1,26 +1,27 @@
 %{
     #include "types.h"
-}%
+%}
 
 %%
 
 
-[1-9][0-9]*             return CONSTANTE ;
--                       return OPERADOR_RESTA ;
-+                       return OPERADOR_ADITIVO ;
-"inicio"                return INICIO ;
-"fin"                   return FIN ;
-":="                    return ASIGNACION ;
-"leer"                  return LEER ;
-"escribir"              return ESCRIBIR ;
-"("                     return PARENTESIS_IZQUIERDO ;
-")"                     return PARENTESIS_DERECHO ;
-","                     return COMA;
-";"                     return PUNTO_COMA ;
-[a-zA-Z][a-zA-Z0-9]*    return IDENTIFICADOR ;
-.                       ;
+[1-9][0-9]*             {return CONSTANTE ;}
+-                       {return OPERADOR_RESTA ;}
+\+                      {return OPERADOR_ADITIVO ;}
+"inicio"                {return INICIO ;}
+"fin"                   {return FIN ;}
+":="                    {return ASIGNACION ;}
+"leer"                  {return LEER ;}
+"escribir"              {return ESCRIBIR ;}
+"("                     {return PARENTESIS_IZQUIERDO ;}
+")"                     {return PARENTESIS_DERECHO ;}
+","                     {return COMA;}
+";"                     {return PUNTO_COMA ;}
+[a-zA-Z][a-zA-Z0-9]*    {return IDENTIFICADOR ;}
+.                       {;}
 
 %%
 int yywrap(void){
     return 1;
 }
+:
