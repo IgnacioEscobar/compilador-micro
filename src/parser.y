@@ -23,7 +23,7 @@ void yyerror (char *s);
 %%
 
 programa                : INICIO listaSentencias FIN
-                               /* {return EXIT_SUCCESSFUL;}*/
+                               {printf("Programa correcto\n");}
 
 listaSentencias         : sentencia
                         | listaSentencias sentencia
@@ -45,7 +45,9 @@ listaDeExpresiones      : expresion
                         | listaDeExpresiones COMA expresion
                         ;
                        
-expresion               : primaria OPERADOR_ADITIVO primaria
+expresion               : primaria 
+                               /* {$$ = $1}*/
+                        | primaria OPERADOR_ADITIVO primaria
                                /* {$$ = $1 + $3}*/
 			| primaria OPERADOR_RESTA primaria
                                /* {$$ = $1 - $3}*/
@@ -63,3 +65,8 @@ primaria                : IDENTIFICADOR
                         ;
                         
 %%
+
+int main(void){
+    return yyparse();
+}
+void yyerror (char *s) {fprintf (stderr, "%s\n", s);} 

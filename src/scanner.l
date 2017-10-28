@@ -1,5 +1,5 @@
 %{
-    #include "parser.tab.h"
+    #include "y.tab.h"
 %}
 
 %%
@@ -18,7 +18,8 @@
 ","                     {return COMA;}
 ";"                     {return PUNTO_COMA ;}
 [a-zA-Z][a-zA-Z0-9]*    {return IDENTIFICADOR ;}
-.                       {;}
+[ \t\n]                 {;}
+.                       {ECHO; yyerror ("Caracter inesperado");}
 
 %%
 int yywrap(void){
