@@ -1,2 +1,5 @@
 *.out
-*.yy.c
+*.c
+*.h
+*.swp
+micro
