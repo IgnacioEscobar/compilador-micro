@@ -6,8 +6,8 @@
 
 
 [1-9][0-9]*             {return CONSTANTE ;}
--                       {return OPERADOR_RESTA ;}
-\+                      {return OPERADOR_ADITIVO ;}
+"-"                     {return OPERADOR_RESTA ;}
+"+"                     {return OPERADOR_ADITIVO ;}
 "inicio"                {return INICIO ;}
 "fin"                   {return FIN ;}
 ":="                    {return ASIGNACION ;}

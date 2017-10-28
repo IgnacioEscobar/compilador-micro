@@ -1,8 +1,8 @@
-%union {int num;char* id}
+%union {int num}
 %start programa
 %token INICIO
 %token FIN
-%token <id>  IDENTIFICADOR
+%token <num>  IDENTIFICADOR
 %token <num> CONSTANTE
 %token ASIGNACION
 %token COMA
@@ -13,6 +13,7 @@
 %token OPERADOR_ADITIVO
 %token LEER
 %token ESCRIBIR
+%type <num> expresion primaria
 
 %%
 
@@ -37,18 +38,20 @@ listaDeExpresiones      : expresion
                         ;
                        
 expresion               : primaria OPERADOR_ADITIVO primaria
-                                {$$ = $1 + $2}
+                                {$$ = $1 + $3}
 			| primaria OPERADOR_RESTA primaria
-                                {$$ = $1 - $2}
+                                {$$ = $1 - $3}
                         | expresion OPERADOR_ADITIVO primaria
-                                {$$ = $1 + $2}
+                                {$$ = $1 + $3}
                         | expresion OPERADOR_RESTA primaria
-                                {$$ = $1 - $2}
+                                {$$ = $1 - $3}
                         ;
                          
 primaria                : IDENTIFICADOR
+                                {$$ = valorIdentificador($1)}
                         | CONSTANTE
                         | PARENTESIS_IZQUIERDO expresion PARENTESIS_DERECHO
+                                {$$ = $2}
                         ;
                         
 %%
