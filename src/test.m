@@ -1,6 +1,6 @@
 inicio
-a := 1;
-b := 2;
-c := a + b;
+valor1 := 112;
+valor2 := 4218;
+c := valor1 + valor2;
 escribir(c);
 fin
