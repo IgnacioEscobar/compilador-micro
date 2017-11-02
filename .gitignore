@@ -1,5 +1,6 @@
 *.out
-*.c
-*.h
+*.yy.c
+*.tab.c
+*.tab.h
 *.swp
 micro
