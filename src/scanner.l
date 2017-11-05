@@ -8,8 +8,7 @@
 
 
 [1-9][0-9]*             {yylval.num = atoi(yytext);return CONSTANTE ;}
-"-"                     {return OPERADOR_RESTA ;}
-"+"                     {return OPERADOR_ADITIVO ;}
+[/+-]                   {yylval.operador = yytext[0];return OPERADOR_ADITIVO ;}
 "inicio"                {return INICIO ;}
 "fin"                   {return FIN ;}
 ":="                    {return ASIGNACION ;}
@@ -19,7 +18,7 @@
 ")"                     {return PARENTESIS_DERECHO ;}
 ","                     {return COMA;}
 ";"                     {return PUNTO_COMA ;}
-[a-zA-Z][a-zA-Z0-9]*    {yylval.id = strtok(yytext," ");return IDENTIFICADOR ;}
+[a-zA-Z][a-zA-Z0-9]*    {yylval.id = yytext;return IDENTIFICADOR ;}
 [ \t\n]                 {;}
 .                       {ECHO; yyerror ("Caracter inesperado");}
 

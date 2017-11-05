@@ -24,7 +24,7 @@ t_dictionary *tablaDeSimbolos;
 int iterador = 0;
 %}
 
-%union {int num; char* id;void* data;}
+%union {int num; char* id;void* data;char operador;}
 %start programa
 %token INICIO
 %token FIN
@@ -35,8 +35,7 @@ int iterador = 0;
 %token PUNTO_COMA
 %token PARENTESIS_IZQUIERDO
 %token PARENTESIS_DERECHO
-%token OPERADOR_RESTA
-%token OPERADOR_ADITIVO
+%token <operador> OPERADOR_ADITIVO
 %token LEER
 %token ESCRIBIR
 %type <data> expresion primaria
@@ -68,7 +67,6 @@ sentencia               : IDENTIFICADOR ASIGNACION expresion PUNTO_COMA
 								simbolo* var = malloc(sizeof(simbolo));
 								strcpy(var -> nombre,identificador);
 								var -> valor = expresion -> valor;
-								printf("\t\t\t\t\t\x1b[33mExp: %s Val: %d\x1b[0m\n",expresion -> nombre, expresion -> valor); 
 
 								// Cargarla en la tabla de simbolos
 								dictionary_put(tablaDeSimbolos, identificador, var);
@@ -107,8 +105,12 @@ expresion               : primaria
 								data* expresionIzq = (data*) $1;
 								data* expresionDer = (data*) $3;
 
-								printf("\t\t\t\t\t\x1b[32mExp: %s Val: %d\x1b[0m\n", expresionIzq -> nombre, expresionIzq -> valor);
-								printf("\t\t\t\t\t\x1b[32mExp: %s Val: %d\x1b[0m\n", expresionDer -> nombre, expresionDer -> valor);
+								char* instruccion;
+								if($2 == '+'){
+									instruccion = "SUMA";
+								}else{
+									instruccion = "RESTA";
+								}
 
 								data* expresion = malloc(sizeof(data));
 								char buf[60];
@@ -121,9 +123,9 @@ expresion               : primaria
 								printf("DECLARA %s, ENTERA\n",expresion->nombre);
 								// Construyendo la instruccion de suma
 								if(expresionIzq->tipo == CONS){
-									printf("SUMA %d,",expresionIzq->valor);
+									printf("%s %d,",instruccion,expresionIzq->valor);
 								}else{
-									printf("SUMA %s,",expresionIzq->nombre);
+									printf("%s %s,",instruccion,expresionIzq->nombre);
 								}
 
 								if(expresionDer->tipo == CONS){
@@ -132,20 +134,6 @@ expresion               : primaria
 									printf("%s,%s\n",expresionDer->nombre,expresion->nombre);
 								}
 
-								$$ = expresion;
-							}
-						| expresion OPERADOR_RESTA expresion
-							{
-								data* expresionIzquierda = (data*) $1;
-								data* expresionDerecha   = (data*) $3;
-
-								data* expresion = malloc(sizeof(data));
-								char buf[60];
-								snprintf(buf, sizeof buf, "Temp&%d", iterador);
-								iterador ++;
-								strcpy(expresion -> nombre,buf);
-								expresion -> tipo = EXP;
-								expresion -> valor = (expresionIzquierda->valor)-(expresionDerecha->valor);
 								$$ = expresion;
 							}
 						;
@@ -167,7 +155,6 @@ primaria                : IDENTIFICADOR
 								// Recuperar el valor de la variable de la tabla de simbolos
 								simbolo* var = dictionary_get(tablaDeSimbolos,$1);
 								identificador -> valor = var -> valor;
-								printf("\t\t\t\t\t\x1b[34mExpVal: %d\x1b[0m\n", identificador -> valor);
 								$$ = identificador;
 
 							}
