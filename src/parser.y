@@ -5,7 +5,6 @@
 #include "dictionary.h"
 #include "list.h"
 #define TOKENLEN 20
-#define ERRORLEN 256
 void yyerror (char *s);
 void instruccionDeLectura(void* datos);
 void instruccionDeEscritura(void* datos);
@@ -67,9 +66,7 @@ sentencia               : IDENTIFICADOR ASIGNACION expresion PUNTO_COMA
 
                                 // Error nombre demasiado largo
                                 if(strlen(identificador)>32){
-                                    char buf[ERRORLEN];
-                                    snprintf(buf, sizeof buf, "%s%s%s", "\x1b[31mError: identificador ‘", identificador,"’ demasiado largo.\x1b[0m");
-                                    yyerror (buf);
+                                    printf("%s%s%s", "\x1b[31mError: identificador ‘", identificador,"’ demasiado largo.\x1b[0m");
                                     return(EXIT_FAILURE);
                                 }
 
@@ -158,14 +155,20 @@ expresion               : primaria
                                 }else{
                                     instruccion = "RESTA";
                                 }
-                                
+
+                                // Reservar memoria para la expresion
                                 data* expresion = malloc(sizeof(data));
+
+                                // Definir el nombre de la variable auxiliar
                                 char buf[60];
                                 snprintf(buf, sizeof buf, "Temp&%d", iterador);
                                 iterador ++;
                                 strcpy(expresion -> nombre,buf);
+                                
+                                // Cargar la estructura
                                 expresion -> tipo = EXP;
                                 expresion -> valor = (expresionIzq->valor)+(expresionDer->valor);
+
                                 // Codigo de Maquina
                                 printf("DECLARA %s, ENTERA\n",expresion->nombre);
                                 // Construyendo la instruccion de suma
@@ -189,12 +192,14 @@ primaria                : IDENTIFICADOR
                             {
                                 // Error variable no declarada
                                 if(!dictionary_has_key(tablaDeSimbolos, $1)){
-                                    char buf[ERRORLEN];
-                                    snprintf(buf, sizeof buf, "%s%s%s", "\x1b[31mError: ‘", $1,"’ no declarada \x1b[0m");
-                                    yyerror (buf);
+                                    printf( "%s%s%s", "\x1b[31mError: ‘", $1,"’ no declarada \x1b[0m");
                                     return(EXIT_FAILURE);
                                 }
+
+                                // Reservar memoria
                                 data* identificador = malloc(sizeof(data));
+
+                                // Cargar estructura
                                 strcpy(identificador -> nombre,$1);
                                 identificador -> tipo = ID;
 
@@ -207,10 +212,16 @@ primaria                : IDENTIFICADOR
                             }
                         | CONSTANTE
                             {
+                                // Reservar memoria
                                 data* constante = malloc(sizeof(data));
+
+                                // Nombre arbitrario
                                 strcpy(constante -> nombre,"---");
+
+                                // Cargar estructura
                                 constante -> tipo = CONS;
                                 constante -> valor = $1;
+
                                 $$ = constante;
                             }
                         | PARENTESIS_IZQUIERDO expresion PARENTESIS_DERECHO
@@ -230,6 +241,7 @@ int main(void){
 
     return yyparse();
 }
+
 void yyerror (char *s) {fprintf (stderr, "%s\n", s);} 
 
 void instruccionDeLectura(void* datos){
@@ -245,6 +257,7 @@ void instruccionDeEscritura(void* datos){
         printf("ESCRIBIR %s\n",expresion->nombre);
     }
 }
+
 void destructorExpresion(void* expresion){
     free(expresion);
 }
