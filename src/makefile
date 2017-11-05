@@ -1,5 +1,5 @@
 micro: lex.yy.c y.tab.c 
-	gcc -g lex.yy.c y.tab.c dictionary.c node.h  -o micro 
+	gcc -g lex.yy.c y.tab.c dictionary.c list.c node.h  -o micro 
 
 lex.yy.c: y.tab.c scanner.l
 	lex scanner.l
