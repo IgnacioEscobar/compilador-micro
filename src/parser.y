@@ -4,13 +4,27 @@ void yyerror (char *s);
 #include <stdlib.h>
 #include <string.h>
 #include "dictionary.h"
+#define TOKENLEN 20
+#define ERRORLEN 256
+typedef enum{
+	EXP,
+	ID,
+	CONS
+} valuable;
 typedef struct {
-    int valor;
-} dataIdentificador;
-t_dictionary *tablaDeSimbolos; 
+	char nombre[33];
+	int  valor;
+} simbolo;
+typedef struct{
+	char nombre[33];
+	valuable tipo;
+	int valor;
+}data;
+t_dictionary *tablaDeSimbolos;
+int iterador = 0;
 %}
 
-%union {int num; char* id;}
+%union {int num; char* id;void* data;}
 %start programa
 %token INICIO
 %token FIN
@@ -25,96 +39,156 @@ t_dictionary *tablaDeSimbolos;
 %token OPERADOR_ADITIVO
 %token LEER
 %token ESCRIBIR
-%type <num> expresion primaria
+%type <data> expresion primaria
 
 %%
 
 programa                : INICIO listaSentencias FIN
-                            {printf("\x1b[32mCompilacion exitosa\x1b[0m\n");}
+							{printf("\x1b[32mCompilacion exitosa\x1b[0m\n");}
 
 listaSentencias         : sentencia
-                        | listaSentencias sentencia
-                        ;
+						| listaSentencias sentencia
+						;
 
 sentencia               : IDENTIFICADOR ASIGNACION expresion PUNTO_COMA                                     
-                            {
-                                // Extraer el nombre del identificador
-                                char* id = (char*) strtok($1," ");
+							{
+								data* expresion = (data*) $3;
+								// Extraer el nombre del identificador
+								char* identificador = (char*) strtok($1," ");
 
-                                if(strlen($1)>32){
-                                    // Error nombre demasiado largo
-                                    char buf[256];
-                                    snprintf(buf, sizeof buf, "%s%s%s", "\x1b[31mError: identificador ‘", $1,"’ demasiado largo.\x1b[0m");
-                                    yyerror (buf);
-                                    return(EXIT_FAILURE);
-                                }
+								// Error nombre demasiado largo
+								if(strlen(identificador)>32){
+									char buf[ERRORLEN];
+									snprintf(buf, sizeof buf, "%s%s%s", "\x1b[31mError: identificador ‘", identificador,"’ demasiado largo.\x1b[0m");
+									yyerror (buf);
+									return(EXIT_FAILURE);
+								}
 
-                                // Crear y cargar la estructura administrativa
-                                dataIdentificador* data = malloc(sizeof(dataIdentificador));
-                                data -> valor = $3;
+								// Crear y cargar la estructura administrativa
+								simbolo* var = malloc(sizeof(simbolo));
+								strcpy(var -> nombre,identificador);
+								var -> valor = expresion -> valor;
+								printf("\t\t\t\t\t\x1b[33mExp: %s Val: %d\x1b[0m\n",expresion -> nombre, expresion -> valor); 
 
-                                // Cargarla en la tabla de simbolos
-                                dictionary_put(tablaDeSimbolos, id, data);
+								// Cargarla en la tabla de simbolos
+								dictionary_put(tablaDeSimbolos, identificador, var);
 
-                                // Desarrollo
-                                dataIdentificador* resultado = dictionary_get(tablaDeSimbolos,id);
-                                printf("identificador: %s, valor: %d\n",id,resultado->valor);
-                            } 
-                        | LEER PARENTESIS_IZQUIERDO listaDeIdentificadores PARENTESIS_DERECHO PUNTO_COMA    
-                               /* {leer($3);}*/
-                        | ESCRIBIR PARENTESIS_IZQUIERDO listaDeExpresiones PARENTESIS_DERECHO PUNTO_COMA   
-                               /* {escribir($3);}*/
-                        ;
-                
+								// Resultado
+									// Recupero los datos desde la tabla de simbolos
+									// para asegurarme de que este correctamente cargada
+								var = dictionary_get(tablaDeSimbolos,identificador);
+
+								printf("DECLARA %s, ENTERA\n",identificador);
+								if(expresion -> tipo == CONS){
+									printf("ALMACENA %d, %s\n",var -> valor,identificador);
+								}else{
+									printf("ALMACENA %s, %s\n",expresion -> nombre,identificador);
+								}
+
+							} 
+						| LEER PARENTESIS_IZQUIERDO listaDeIdentificadores PARENTESIS_DERECHO PUNTO_COMA    
+							   /* {leer($3);}*/
+						| ESCRIBIR PARENTESIS_IZQUIERDO listaDeExpresiones PARENTESIS_DERECHO PUNTO_COMA   
+							   /* {escribir($3);}*/
+						;
+				
 listaDeIdentificadores  : IDENTIFICADOR 
-                        | listaDeIdentificadores COMA IDENTIFICADOR
-                        ;
-                       
+						| listaDeIdentificadores COMA IDENTIFICADOR
+						;
+					   
 listaDeExpresiones      : expresion
-                        | listaDeExpresiones COMA expresion
-                        ;
-                       
+						| listaDeExpresiones COMA expresion
+						;
+					   
 expresion               : primaria 
-                            {$$ = $1;}
-                        | primaria OPERADOR_ADITIVO primaria
-                            {$$ = $1 + $3;}
-                        | primaria OPERADOR_RESTA primaria
-                            {$$ = $1 - $3;}
-                        | expresion OPERADOR_ADITIVO primaria
-                            {$$ = $1 + $3;}
-                        | expresion OPERADOR_RESTA primaria
-                            {$$ = $1 - $3;}
-                        ;
-                         
-primaria                : IDENTIFICADOR
-                            {
-                                if(!dictionary_has_key(tablaDeSimbolos, $1)){
-                                    // Error variable no declarada
-                                    char buf[256];
-                                    snprintf(buf, sizeof buf, "%s%s%s", "\x1b[31mError: ‘", $1,"’ no declarada (primer uso en esta funcion)\x1b[0m");
-                                    yyerror (buf);
-                                    return(EXIT_FAILURE);
-                                }else{
-                                    // Recuperar el valor de la variable de la tabla de simbolos
-                                    dataIdentificador* data = dictionary_get(tablaDeSimbolos,$1);
-                                    $$ = data -> valor;
+							{$$ = $1;}
+						| expresion OPERADOR_ADITIVO expresion
+							{
+								data* expresionIzq = (data*) $1;
+								data* expresionDer = (data*) $3;
 
-                                    // Desarrollo
-                                    printf("valor de %s: %d\n",$1,data -> valor);
-                                }
-                            }
-                        | CONSTANTE
-                            {$$ = $1;}
-                        | PARENTESIS_IZQUIERDO expresion PARENTESIS_DERECHO
-                            {$$ = $2;}
-                        ;
-                        
+								printf("\t\t\t\t\t\x1b[32mExp: %s Val: %d\x1b[0m\n", expresionIzq -> nombre, expresionIzq -> valor);
+								printf("\t\t\t\t\t\x1b[32mExp: %s Val: %d\x1b[0m\n", expresionDer -> nombre, expresionDer -> valor);
+
+								data* expresion = malloc(sizeof(data));
+								char buf[60];
+								snprintf(buf, sizeof buf, "Temp&%d", iterador);
+								iterador ++;
+								strcpy(expresion -> nombre,buf);
+								expresion -> tipo = EXP;
+								expresion -> valor = (expresionIzq->valor)+(expresionDer->valor);
+								// Codigo de Maquina
+								printf("DECLARA %s, ENTERA\n",expresion->nombre);
+								// Construyendo la instruccion de suma
+								if(expresionIzq->tipo == CONS){
+									printf("SUMA %d,",expresionIzq->valor);
+								}else{
+									printf("SUMA %s,",expresionIzq->nombre);
+								}
+
+								if(expresionDer->tipo == CONS){
+									printf("%d,%s\n",expresionDer->valor,expresion->nombre);
+								}else{
+									printf("%s,%s\n",expresionDer->nombre,expresion->nombre);
+								}
+
+								$$ = expresion;
+							}
+						| expresion OPERADOR_RESTA expresion
+							{
+								data* expresionIzquierda = (data*) $1;
+								data* expresionDerecha   = (data*) $3;
+
+								data* expresion = malloc(sizeof(data));
+								char buf[60];
+								snprintf(buf, sizeof buf, "Temp&%d", iterador);
+								iterador ++;
+								strcpy(expresion -> nombre,buf);
+								expresion -> tipo = EXP;
+								expresion -> valor = (expresionIzquierda->valor)-(expresionDerecha->valor);
+								$$ = expresion;
+							}
+						;
+						 
+primaria                : IDENTIFICADOR
+							{
+								// Error variable no declarada
+								if(!dictionary_has_key(tablaDeSimbolos, $1)){
+									char buf[ERRORLEN];
+									snprintf(buf, sizeof buf, "%s%s%s", "\x1b[31mError: ‘", $1,"’ no declarada \x1b[0m");
+									yyerror (buf);
+									return(EXIT_FAILURE);
+								}
+								data* identificador = malloc(sizeof(data));
+								strcpy(identificador -> nombre,$1);
+								identificador -> tipo = ID;
+
+
+								// Recuperar el valor de la variable de la tabla de simbolos
+								simbolo* var = dictionary_get(tablaDeSimbolos,$1);
+								identificador -> valor = var -> valor;
+								printf("\t\t\t\t\t\x1b[34mExpVal: %d\x1b[0m\n", identificador -> valor);
+								$$ = identificador;
+
+							}
+						| CONSTANTE
+							{
+								data* constante = malloc(sizeof(data));
+								strcpy(constante -> nombre,"---");
+								constante -> tipo = CONS;
+								constante -> valor = $1;
+								$$ = constante;
+							}
+						| PARENTESIS_IZQUIERDO expresion PARENTESIS_DERECHO
+							{$$ = $2;}
+						;
+						
 %%
 
 int main(void){
-    
-    tablaDeSimbolos = dictionary_create();
+	// Inicializar la tabla de simbolos
+	tablaDeSimbolos = dictionary_create();
 
-    return yyparse();
+	return yyparse();
 }
 void yyerror (char *s) {fprintf (stderr, "%s\n", s);} 
