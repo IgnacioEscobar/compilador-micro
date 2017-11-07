@@ -89,6 +89,7 @@ sentencia               : IDENTIFICADOR ASIGNACION expresion PUNTO_COMA
                                 }else{
                                     printf("ALMACENA %s, %s\n",expresion -> nombre,identificador);
                                 }
+                                free(expresion);
 
                             } 
                         | LEER PARENTESIS_IZQUIERDO listaDeIdentificadores PARENTESIS_DERECHO PUNTO_COMA    
@@ -96,7 +97,7 @@ sentencia               : IDENTIFICADOR ASIGNACION expresion PUNTO_COMA
                                     // Recorrer la lista imprimiendo las instrucciones correspondientes
                                     list_iterate(listaDeIdentificadores, instruccionDeLectura);
                                     // Limpiar la lista para las proximas ejecuciones
-                                    list_clean_and_destroy_elements(listaDeIdentificadores,destructorIdentificador);
+                                    list_clean(listaDeIdentificadores);
 
                                 }
                         | ESCRIBIR PARENTESIS_IZQUIERDO listaDeExpresiones PARENTESIS_DERECHO PUNTO_COMA   
@@ -112,8 +113,13 @@ listaDeIdentificadores  : IDENTIFICADOR
                             {
                                 // Reservar memoria
                                 simbolo* identificador = malloc(sizeof(simbolo));
+                                // Error variable no declarada
+                                if(!dictionary_has_key(tablaDeSimbolos, $1)){
+                                    printf( "%s%s%s", "\x1b[31mError: ‘", $1,"’ no declarada \x1b[0m");
+                                    return(EXIT_FAILURE);
+                                };
                                 //Recuperar identificador de la tabla de simbolos
-                                identificador = dictionary_get(tablaDeSimbolos,$1);
+                                identificador = dictionary_get(tablaDeSimbolos,$1); 
                                 //Agregarlo a la lista
                                 list_add(listaDeIdentificadores, identificador);
                             }
@@ -121,6 +127,11 @@ listaDeIdentificadores  : IDENTIFICADOR
                             {
                                 // Reservar memoria
                                 simbolo* identificador = malloc(sizeof(simbolo));
+                                // Error variable no declarada
+                                if(!dictionary_has_key(tablaDeSimbolos, $3)){
+                                    printf( "%s%s%s", "\x1b[31mError: ‘", $3,"’ no declarada \x1b[0m");
+                                    return(EXIT_FAILURE);
+                                };
                                 //Recuperar identificador de la tabla de simbolos
                                 identificador = dictionary_get(tablaDeSimbolos,$3);
                                 //Agregarlo a la lista
@@ -167,7 +178,11 @@ expresion               : primaria
                                 
                                 // Cargar la estructura
                                 expresion -> tipo = EXP;
-                                expresion -> valor = (expresionIzq->valor)+(expresionDer->valor);
+                                if($2 == '+'){
+                                    expresion -> valor = (expresionIzq->valor)+(expresionDer->valor);
+                                }else{
+                                    expresion -> valor = (expresionIzq->valor)-(expresionDer->valor);
+                                }                                
 
                                 // Codigo de Maquina
                                 printf("DECLARA %s, ENTERA\n",expresion->nombre);
@@ -185,6 +200,8 @@ expresion               : primaria
                                 }
 
                                 $$ = expresion;
+                                free(expresionIzq);
+                                free(expresionDer);
                             }
                         ;
                          
@@ -260,7 +277,4 @@ void instruccionDeEscritura(void* datos){
 
 void destructorExpresion(void* expresion){
     free(expresion);
-}
-void destructorIdentificador(void* identificador){
-    free(identificador);
 }
