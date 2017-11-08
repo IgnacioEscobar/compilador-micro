@@ -52,6 +52,7 @@ programa                : INICIO listaSentencias FIN
                             {
                                 printf("DETIENE\n\n\n");
                                 printf("\x1b[32mCompilacion exitosa\x1b[0m\n");
+                                return(EXIT_SUCCESS);
                             }
 
 listaSentencias         : sentencia
@@ -62,11 +63,12 @@ sentencia               : IDENTIFICADOR ASIGNACION expresion PUNTO_COMA
                             {
                                 data* expresion = (data*) $3;
                                 // Extraer el nombre del identificador
-                                char* identificador = (char*) strtok($1," ");
+                                char* identificador = strtok($1," ");
+                                identificador = strtok($1,":=");
 
                                 // Error nombre demasiado largo
                                 if(strlen(identificador)>32){
-                                    printf("%s%s%s", "\x1b[31mError: identificador ‘", identificador,"’ demasiado largo.\x1b[0m");
+                                    printf("%s%s%s", "\x1b[31mError: identificador ‘", identificador,"’ demasiado largo.\x1b[0m\n");
                                     return(EXIT_FAILURE);
                                 }
 
@@ -78,35 +80,29 @@ sentencia               : IDENTIFICADOR ASIGNACION expresion PUNTO_COMA
                                 // Cargarla en la tabla de simbolos
                                 dictionary_put(tablaDeSimbolos, identificador, var);
 
-                                // Resultado
-                                    // Recupero los datos desde la tabla de simbolos
-                                    // para asegurarme de que este correctamente cargada
-                                var = dictionary_get(tablaDeSimbolos,identificador);
-
                                 printf("DECLARA %s, ENTERA\n",identificador);
                                 if(expresion -> tipo == CONS){
-                                    printf("ALMACENA %d, %s\n",var -> valor,identificador);
+                                    printf("ALMACENA %d, %s\n",expresion -> valor,  identificador);
                                 }else{
-                                    printf("ALMACENA %s, %s\n",expresion -> nombre,identificador);
+                                    printf("ALMACENA %s, %s\n",expresion -> nombre, identificador);
                                 }
                                 free(expresion);
 
                             } 
                         | LEER PARENTESIS_IZQUIERDO listaDeIdentificadores PARENTESIS_DERECHO PUNTO_COMA    
-                                {
-                                    // Recorrer la lista imprimiendo las instrucciones correspondientes
-                                    list_iterate(listaDeIdentificadores, instruccionDeLectura);
-                                    // Limpiar la lista para las proximas ejecuciones
-                                    list_clean(listaDeIdentificadores);
-
-                                }
+                            {
+                                // Recorrer la lista imprimiendo las instrucciones correspondientes
+                                list_iterate(listaDeIdentificadores, instruccionDeLectura);
+                                // Limpiar la lista para las proximas ejecuciones
+                                list_clean(listaDeIdentificadores); 
+                            }
                         | ESCRIBIR PARENTESIS_IZQUIERDO listaDeExpresiones PARENTESIS_DERECHO PUNTO_COMA   
-                                {
-                                    // Recorrer la lista imprimiendo las instrucciones correspondientes
-                                    list_iterate(listaDeExpresiones, instruccionDeEscritura);
-                                    // Limpiar la lista para las proximas ejecuciones
-                                    list_clean_and_destroy_elements(listaDeExpresiones,destructorExpresion);
-                                }
+                            {
+                                // Recorrer la lista imprimiendo las instrucciones correspondientes
+                                list_iterate(listaDeExpresiones, instruccionDeEscritura);
+                                // Limpiar la lista para las proximas ejecuciones
+                                list_clean_and_destroy_elements(listaDeExpresiones,destructorExpresion);
+                            }
                         ;
                 
 listaDeIdentificadores  : IDENTIFICADOR 
@@ -115,7 +111,7 @@ listaDeIdentificadores  : IDENTIFICADOR
                                 simbolo* identificador = malloc(sizeof(simbolo));
                                 // Error variable no declarada
                                 if(!dictionary_has_key(tablaDeSimbolos, $1)){
-                                    printf( "%s%s%s", "\x1b[31mError: ‘", $1,"’ no declarada \x1b[0m");
+                                    printf( "%s%s%s", "\x1b[31mError: ‘", $1,"’ no declarada \x1b[0m\n");
                                     return(EXIT_FAILURE);
                                 };
                                 //Recuperar identificador de la tabla de simbolos
@@ -129,7 +125,7 @@ listaDeIdentificadores  : IDENTIFICADOR
                                 simbolo* identificador = malloc(sizeof(simbolo));
                                 // Error variable no declarada
                                 if(!dictionary_has_key(tablaDeSimbolos, $3)){
-                                    printf( "%s%s%s", "\x1b[31mError: ‘", $3,"’ no declarada \x1b[0m");
+                                    printf( "%s%s%s", "\x1b[31mError: ‘", $3,"’ no declarada \x1b[0m\n");
                                     return(EXIT_FAILURE);
                                 };
                                 //Recuperar identificador de la tabla de simbolos
@@ -209,7 +205,7 @@ primaria                : IDENTIFICADOR
                             {
                                 // Error variable no declarada
                                 if(!dictionary_has_key(tablaDeSimbolos, $1)){
-                                    printf( "%s%s%s", "\x1b[31mError: ‘", $1,"’ no declarada \x1b[0m");
+                                    printf( "%s%s%s", "\x1b[31mError: ‘", $1,"’ no declarada \x1b[0m\n");
                                     return(EXIT_FAILURE);
                                 }
 

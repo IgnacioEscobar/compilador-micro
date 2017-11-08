@@ -1,5 +1,6 @@
 inicio
 
+a:=1;
 valor1 := 112;
 valor2 := 4218;
 valor3 := 100 + 40 + 5;
